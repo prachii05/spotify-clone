@@ -1,0 +1,55 @@
+import cv2
+
+# Load the pre-trained cascade classifier for detecting faces
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+# Load the pre-trained cascade classifier for detecting helmets
+helmet_cascade = cv2.CascadeClassifier('haarcascade_helmet.xml')
+
+# Load the video file or start the webcam
+video_capture = cv2.VideoCapture(0)  # Use 0 for webcam or provide the video file path
+
+while True:
+    # Read each frame of the video
+    ret, frame = video_capture.read()
+
+    # Convert the frame to gray scale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces in the frame
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+    # Iterate over each detected face
+    for (x, y, w, h) in faces:
+        # Draw a rectangle around the face
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+        # Extract the face region of interest
+        face_roi = gray[y:y+h, x:x+w]
+
+        # Detect helmets in the face region
+        helmets = helmet_cascade.detectMultiScale(face_roi, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+        # Check if any helmets are detected
+        if len(helmets) > 0:
+            # Helmets detected, worker is wearing a helmet
+            helmet_status = "Helmet Detected"
+            helmet_color = (0, 255, 0)  # Green color
+        else:
+            # No helmets detected, worker is not wearing a helmet
+            helmet_status = "Helmet Not Detected"
+            helmet_color = (0, 0, 255)  # Red color
+
+        # Display the helmet status text
+        cv2.putText(frame, helmet_status, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, helmet_color, 2)
+
+    # Display the frame with detected faces and helmet status
+    cv2.imshow('Object Detection', frame)
+
+    # Break the loop if 'q' key is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release the video capture and close all windows
+video_capture.release()
+cv2.destroyAllWindows()
